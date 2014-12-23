@@ -9,12 +9,22 @@ class XMLError(Exception):
     pass
 
 class XMLTree:
-    def __init__(self, etree):
-        self.tag = etree.tag
-        self.text = None if etree.text == None else etree.text.strip()
-        self.children = [XMLTree(child) for child in etree.getchildren()]
-        self.attribute = etree.attrib
-        self.single = self.text == None and len(self.children) == 0
+    def __init__(self, tag_or_tree, flag=True):
+        if flag:
+            self.tag = tag_or_tree
+            self.text = None
+            self.children = []
+            self.attribute = {}
+        else:
+            self.tag = tag_or_tree.tag
+            self.text = None if tag_or_tree.text == None else tag_or_tree.text.strip()
+            self.children = [XMLTree(child, False) for child in tag_or_tree.getchildren()]
+            self.attribute = tag_or_tree.attrib
+
+    def set(self, text, children, attribute):
+        self.text = None if text == None else text.strip()
+        self.children = children
+        self.attribute = attribute
 
     def exist(self, name):
         for child in self.children:
@@ -41,7 +51,7 @@ class XMLTree:
         a = " ".join([key + "='" + self.attribute[key] + "'" for key in self.attribute])
         if len(a) > 0:
             a = " " + a
-        if self.single:
+        if self.text == None and len(self.children) == 0:
             return ("<{0}{1} />".format(self.tag, a), None)
         else:
             return ("<{0}{1}>".format(self.tag, a), "</{0}>".format(self.tag))
@@ -53,7 +63,7 @@ def main(name):
         for line in f:
             parser.feed(line)
 
-        xml = XMLTree(parser.close())
+        xml = XMLTree(parser.close(), False)
 
         run(xml)
 
@@ -66,11 +76,7 @@ def attribute(xml):
 def run(xml):
     tmp = None;
 
-    template = xml.get("template")
-
-    tmp = int(template.text)
-    if tmp in [1]:
-        template = tmp 
+    template = int(xml.get("template").text)
 
     structure = xml.get("structure")
     pages = xml.get("pages")
@@ -84,7 +90,10 @@ def run(xml):
     data["body"] = structure.get("body")
     data["indent"] = INDENT
 
-    method1(data, pages)
+    if template == 1:
+        method1(data, pages)
+    else:
+        raise XMLError("no such template")
 
 def method1(data, pages):
     # [header, nav, article, aside, footer] = [data["body"].get_all(t) for t in ["header", "nav", "article", "aside", "footer"]]
@@ -94,6 +103,7 @@ def method1(data, pages):
             make1(f, data, p)
 
 def make1(f, data, xml):
+    name = xml.get("name").text
     title = xml.get("title").text
 
     f.write("<!DOCTYPE html>\n")
@@ -136,8 +146,6 @@ def make1(f, data, xml):
         if len(elems) > 0:
             elems = sorted(elems, key=lg)
             ors = [e.attribute.pop("order") for e in elems]
-            print(s, ors)
-
             tmp = elems[0].children
             elems[0].children = [c for e in elems for c in e.children]
             rec(elems[0], 1)
@@ -145,16 +153,38 @@ def make1(f, data, xml):
                 e.attribute["order"] = o
             elems[0].children = tmp
 
+    nav = XMLTree("nav")
+    nav.attribute["order"] = 1
+
+    ul = XMLTree("ul")
+    ul.attribute["id"] = "links"
+
+    nav.children.append(ul)
+
+    for (n, t) in data["html"]:
+        d = {}
+        c = []
+        txt = None
+        if n == name:
+            d = { "class": "checked" }
+            txt = t
+        else:
+            a = XMLTree("a")
+            a.set(t, [], { "href": n, "target": "_blank" })
+            c.append(a)
+        li = XMLTree("li")
+        li.set(txt, c, d)
+        ul.children.append(li)
+
+    data["body"].children.append(nav)
+
     construct("header")
     construct("nav")
     construct("article")
     construct("aside")
     construct("footer")
-    # article = data["body"].get("article")
-    # tmp = article.children
-    # article.children = xml.get_all("article").children
-    # rec(article, 1)
-    # article.children = tmp
+
+    data["body"].children.remove(nav)
 
     f.write("</body>\n")
     f.write("</html>\n")
