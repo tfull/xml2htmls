@@ -111,6 +111,12 @@ def make1(f, data, xml):
     f.write("<head>\n")
     f.write("{0}<title>{1}</title>\n".format(data["indent"], data["title"] + " - " + title))
     f.write("{0}<meta charset=\"{1}\" />\n".format(data["indent"], data["charset"]))
+    tmp = xml.find("keywords")
+    if tmp:
+        f.write("{0}<meta name=\"keywords\" content=\"{1}\" />\n".format(data["indent"], tmp.text))
+    tmp = xml.find("description")
+    if tmp:
+        f.write("{0}<meta name=\"description\" content=\"{1}\" />\n".format(data["indent"], tmp.text))
     for css in data["css"]:
         f.write("{0}<link rel=\"stylesheet\" href=\"{1}\" type=\"text/css\" />\n".format(data["indent"], css))
     for js in data["js"]:
@@ -120,7 +126,13 @@ def make1(f, data, xml):
 
     def rec(xml, indent):
         (tag0, tag1) = xml.tag_s()
-        if tag1 == None: # single
+        if xml.tag == "codefile": # code
+            if "name" not in xml.attribute:
+                raise XMLError("no name in codefile")
+            with open(xml.attribute["name"]) as codefile:
+                for line in codefile:
+                    f.write(line.rstrip() + "\n")
+        elif tag1 == None: # single
             f.write((data["indent"] * indent) + tag0 + "\n")
         else:
             if len(xml.children) > 0:
@@ -131,7 +143,7 @@ def make1(f, data, xml):
             else:
                 f.write("{0}{1}{3}{2}\n".format(data["indent"] * indent, tag0, tag1, xml.text))
 
-    def construct(s):
+    def construct(s, indent):
         def lg(e):
             return int(e.attribute["order"])
 
@@ -148,7 +160,7 @@ def make1(f, data, xml):
             ors = [e.attribute.pop("order") for e in elems]
             tmp = elems[0].children
             elems[0].children = [c for e in elems for c in e.children]
-            rec(elems[0], 1)
+            rec(elems[0], indent)
             for (e, o) in zip(elems, ors):
                 e.attribute["order"] = o
             elems[0].children = tmp
@@ -170,7 +182,7 @@ def make1(f, data, xml):
             txt = t
         else:
             a = XMLTree("a")
-            a.set(t, [], { "href": n, "target": "_blank" })
+            a.set(t, [], { "href": n })
             c.append(a)
         li = XMLTree("li")
         li.set(txt, c, d)
@@ -178,11 +190,15 @@ def make1(f, data, xml):
 
     data["body"].children.append(nav)
 
-    construct("header")
-    construct("nav")
-    construct("article")
-    construct("aside")
-    construct("footer")
+    construct("header", 1)
+    f.write(data["indent"] + "<div id=\"main\">\n")
+    f.write(data["indent"] * 2 + "<div id=\"side\">\n")
+    construct("nav", 3)
+    construct("aside", 3)
+    f.write(data["indent"] * 2 + "</div>\n" )
+    construct("article", 2)
+    f.write(data["indent"] + "</div>\n")
+    construct("footer", 1)
 
     data["body"].children.remove(nav)
 
