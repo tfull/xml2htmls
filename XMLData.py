@@ -12,7 +12,7 @@ class XMLTree:
             self.attribute = {}
         else:
             self.tag = tag_or_tree.tag
-            self.text = None if tag_or_tree.text == None else tag_or_tree.text.strip()
+            self.text = None if tag_or_tree.text == None else tag_or_tree.text.strip().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             self.children = [XMLTree(child, False) for child in tag_or_tree.getchildren()]
             self.attribute = tag_or_tree.attrib
 
