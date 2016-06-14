@@ -4,8 +4,7 @@ import sys
 from xml.etree.ElementTree import XMLParser
 from XMLData import XMLError
 from XMLData import XMLTree
-import Method1 as M1
-import Method2 as M2
+import Method as M
 
 def main(name):
     with open(name, "r") as f:
@@ -16,19 +15,8 @@ def main(name):
 
         xml = XMLTree(parser.close(), False)
 
-        run(xml)
+        M.run(xml.get("files"), xml.get("structure"), xml.get("pages"))
 
-def run(xml):
-    template = int(xml.get("template").text)
-    structure = xml.get("structure")
-    pages = xml.get("pages")
-
-    if template == 1:
-        M1.run(structure, pages)
-    elif template == 2:
-        M2.run(structure, pages)
-    else:
-        raise XMLError("no such template")
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
