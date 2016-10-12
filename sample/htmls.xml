@@ -1,0 +1,63 @@
+<xml>
+    <files>
+        <html>
+            <path>index.html</path>
+            <title>TOP</title>
+        </html>
+        <html>
+            <path>page1.html</path>
+            <title>Content 1</title>
+        </html>
+        <html>
+            <path>page2.html</path>
+            <title>Content 2</title>
+        </html>
+        <css>css/design.css</css>
+        <js>js/control.js</js>
+    </files>
+    <structure>
+        <title>A Web Site</title>
+        <body>
+            <header />
+            <div id="main">
+                <div id="side">
+                    <nav />
+                    <aside />
+                </div>
+                <article />
+            </div>
+            <footer />
+        </body>
+        <template>
+            <header>
+                <h1>Web Site</h1>
+            </header>
+            <footer>
+                <div>Copyright (c) Admin 2015- All Rights Reserved.</div>
+            </footer>
+        </template>
+    </structure>
+    <pages>
+        <page>
+            <path>index.html</path>
+            <title>TOP</title>
+            <article>
+                <p>It works!</p>
+            </article>
+        </page>
+        <page>
+            <path>page1.html</path>
+            <title>Content 1</title>
+            <article>
+                <p>This is content 1.</p>
+            </article>
+        </page>
+        <page>
+            <path>page2.html</path>
+            <title>Content 2</title>
+            <article>
+                <p>This is content 2.</p>
+            </article>
+        </page>
+    </pages>
+</xml>
